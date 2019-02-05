@@ -1,0 +1,26 @@
+{
+	"question":"Create a function called 'answer' that takes a persons name and age as parameters and returns thier name and thier age in 5 years",
+	"example":"<code>answer('billie',22)</code> would return <code>billie:27</code>",
+	"tests":[
+		{
+			"param":["Howard",20],
+			"answer":"Howard:25",
+			"mark":1
+		},
+		{
+			"param":["Linda",20],
+			"answer":"Linda:25",
+			"mark":2
+		},
+		{
+			"param":["Daniel",19],
+			"answer":"Daniel:24",
+			"mark":1
+		},
+		{
+			"param":["Elizabeth",94],
+			"answer":"Elizabeth:99",
+			"mark":1
+		}
+	]
+}

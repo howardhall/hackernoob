@@ -1,0 +1,12 @@
+[Unit]
+Description=CS261 Software engineering automark
+After=network.target
+
+[Service]
+ExecStart=[marker.py]
+KillMode=process
+StandardOutput=syslog
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target
