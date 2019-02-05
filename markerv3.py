@@ -1,13 +1,6 @@
 #!/usr/bin/python3
 import os, subprocess, sys, time, json, sqlite3
 class Marker:
-    # self.conn = None
-    # self.db = None
-    # self.exam = None
-    # self.test = None
-    # self.score = 0
-    # self.id = 0
-    # self.type = 0
     def __init__(self):
         self.setup_db()
 
