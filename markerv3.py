@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import os, subprocess, sys, time, json, sqlite3
+import os, subprocess, sys, time, json, sqlite3, markers, traceback, hashlib
 class Marker:
     def __init__(self):
         self.setup_db()
@@ -17,17 +17,18 @@ class Marker:
         pass
 
     def setup(self,id):
-        query = "SELECT * FROM tests WHERE id = {}".format(id)
+        query = "SELECT * FROM tests WHERE id = {}".format(id[0])
         result = self.db.execute(query)
         for i in result:
             self.id = i[0]
             self.format = i[1]
             self.time = i[4] - i[3]
             self.type = i[2]
+            self.name = i[7]
             return
 
     def store(self):
-        query = "UPDATE tests SET result = {} WHERE id = {}".format(self.score,self.id)
+        query = "UPDATE tests SET result = {}, marked = 1 WHERE id = {}".format(self.score,self.id)
         self.db.execute(query)
         return self.db.rowcount
 
@@ -39,19 +40,21 @@ class Marker:
             break
         datafile = open("solutions/{}.json".format(self.json_name))
         self.result = json.loads(datafile.read())
-        print(self.result)
+        #print(self.result)
 
     def prepare(self):
+        #name = hashlib.md5(str(self.id).encode()).hexdigest()
+        name = self.name
         if self.format == "py":
-            self.markable = PyMark("marking")# TODO change to value in db
+            self.markable = markers.PyMark(name)# TODO change to value in db
         # other cases
 
     def examine(self):
         self.score = 0
-        for test in self.result.tests:
-            guess = self.markable.execute(test.param)
-            if guess == test.answer:
-                self.score += test.mark
+        for test in self.result['tests']:
+            guess = self.markable.execute(test['param'])
+            if guess == test['answer']:
+                self.score += test['mark']
 
     def check_new(self):
         query = "SELECT * FROM tests WHERE marked=0;"
@@ -60,26 +63,35 @@ class Marker:
             results.append(id)
         return results
 
+    def error(self):
+        query = "UPDATE tests SET result = 0, marked = 1 WHERE id = {}".format(self.id)
+        self.db.execute(query)
+        return self.db.rowcount
+
     def main(self):
         while True:
-            pending = check_new()
+            pending = self.check_new()
             if len(pending) == 0:
-                time.sleep(60)
-                print("waiting")
+                for i in range(60):
+                    print("Waiting {} seconds before next check".format(60-i),end="\r")
+                    time.sleep(1)
                 continue
+
             try:
                 self.setup(pending[0])
                 self.load()
                 self.prepare()
                 self.examine()
                 self.store()
+                print("Sucessfully marked test id {}, mark = {}".format(self.id,self.score))
+            except FloatingPointError:
+                print("marking test with id {} failed".format(pending[0][0]))
+                self.error()
             except Exception:
-                print("marking test with id {} failed").format(pending[0])
-                continue
+                print("MAJOR SYSTEM ERROR, BIG F")
+                traceback.print_exc(file=sys.stdout)
+                sys.exit(13)
             self.commit_db()
-
-
-
 
 if __name__ == '__main__':
     mark = Marker()
